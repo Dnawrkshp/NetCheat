@@ -1,0 +1,35 @@
+Update list:   
+============
+
+NetCheat v2:
+- Cleaned up the code immensely
+- Moved the PC manager to VB6
+- Added debug mode with ps2link and CL-LiveDebug support
+- Rewrote engine and made it more efficient
+- Added _send and _recv (allows recieving files greater than 1kb)
+- Removed mastercode engine
+- Removed debug features on PC
+- Added 9 codetype (Exec Data / Hook)
+- Added F codetype (Switch Joker)
+
+NetCheat v1.3:   
+- Added Bin Convert tool
+- Sends codes in binary form (.bin), so as to achieve a faster parse on the PS2 side.
+
+NetCheat v1.2:   
+- Added alternate boot method for games that don't work with normal boot.
+- Engine supports E type jokers.
+- Added disconnect option (if the PS2 freezes during connection).
+
+NetCheat v1.1:   
+- Added boot option, can boot elfs from mc0, mc1, mass0, and mass1.
+- Added debug features for PC side.
+- Added mastercode option (incomplete).
+
+NetCheat v1.0:   
+- Created NetCheat.
+- Added open, save, and save as file options for text files.
+- Added Help menu, About/Credits menu.
+- Added PC to PS2 connectivity.
+- Added Boot functions and fixed a few bugs.
+

@@ -1,0 +1,78 @@
+NetCheat consists of NetCheat.elf, NetCheatManager.exe, cb2util (made by misfire), and zlib.dll
+Developed by Dnawrkshp and ORCXodus
+
+NetCheat codetypes:
+
+For all the codetypes not explained, please refer to this: http://www.codemasters-project.net/guides/showentry.php?e=847
+The ones below either are new or have something different.
+My thanks to Pyriel for making such a thorough guide on the codetypes of CodeBreaker.
+
+------------------------- Code Type 4
+Multi-address Write (slide-fill code)
+4aaaaaaa wcccssss
+xxxxxxxx iiiiiiii
+
+a: 25-bit address.
+w: Width (0 = 32 bit, 1 = 16 bit, 2 = 8 bit)
+c: Number of times to write.
+s: Step value (w = 0: s = (s * 4), w = 1: s = (s * 2), w = 2: s = s.
+x: 32-bit value.
+i: 32-bit value increment.
+
+By Pyriel:
+The 32-bit value xxxxxxxx will be stored at the address given by aaaaaaa.
+The count ccc will be decremented.
+The step value ssss will be multiplied by (w = 0:4; w = 1:2; w = 2:1) and added to the address.
+The value xxxxxxxx will have iiiiiiii added to it.
+This process will continue until cccc reaches zero.
+Basically, write to ccc addresses, while jumping ssss * (4 - (w * 2)) addresses in between.
+
+Example:
+40EE7174 00060002
+00000063 00000001
+------------------------- Code Type 9
+Conditional mastercode
+9aaaaaaa vvvvvvvv
+a: Address
+v: 32-bit value
+
+NetCheat will read the value at aaaaaaa and compare it with vvvvvvvv.
+If they are equal, NetCheat will execute it's engine.
+Otherwise it will not and no cheats will run.
+If you do not include a 9 type mastercode, NetCheat will run the moment it is hooked and a syscall is called
+
+Example:
+9013BA48 00832021
+------------------------- Code Type A
+Kernel write
+Aaaaaaaa vvvvvvvv
+a: Address
+v: 32-bit value
+
+The value v will be stored at 0x8aaaaaaa (KSEG0)
+
+Example:
+A0070000 1337D00D
+------------------------- Code Type B
+Delay
+B0000000 0vvvvvvv
+
+v: 28-bit value
+
+The engine will execute all the codes above vvvvvvv times before executing the one below
+
+Example:
+B0000000 00000100
+------------------------- Code Type F1
+Execute Data / Hook - Idea by Gtlcpimp
+F10000dd 0aaaaaaa
+
+a: Address
+d: 8-bit value
+
+The engine will run dd times before executing a jalr to aaaaaaa
+
+Example:
+F100000E 000C0000
+
+The rest can once again be accessed at: http://www.codemasters-project.net/guides/showentry.php?e=847

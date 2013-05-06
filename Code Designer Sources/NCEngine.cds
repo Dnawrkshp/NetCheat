@@ -1521,14 +1521,11 @@ beq zero, zero, :_PJT_Exit
 nop
 
 _PJT_4: //Mask unset (ADDR & VALUE == 0)
-//I decided to use my own method since I didn't understand what CB was doing
-//(ADDR & ~VALUE) == ~VALUE
-hexcode $02208827 //nor s1, s1, zero //Not gate
 sll s1, s1, 16
 srl s1, s1, 16
 and t1, s1, t0
 
-beq t1, s1, :_PJT_Exit
+bne t1, zero, :_PJT_Exit
 nop
 
 addiu v0, zero, 1
@@ -1537,13 +1534,11 @@ beq zero, zero, :_PJT_Exit
 nop
 
 _PJT_5: //Mask set (ADDR & VALUE != 0)
-//I decided to use my own method since I didn't understand what CB was doing
-hexcode $02208827 //nor s1, s1, zero //Not gate
 sll s1, s1, 16
 srl s1, s1, 16
 and t1, s1, t0
 
-bne t1, s1, :_PJT_Exit
+beq t1, zero, :_PJT_Exit
 nop
 
 addiu v0, zero, 1
@@ -1551,14 +1546,13 @@ addiu v0, zero, 1
 beq zero, zero, :_PJT_Exit
 nop
 
-_PJT_6: //All but value ((VALUE & ADDR) - VALUE = 0)
-hexcode $02208827 //nor s1, s1, zero //Not gate
+_PJT_6: //All but value ((VALUE & ADDR) - VALUE == 0)
 sll s1, s1, 16
 srl s1, s1, 16
 and t1, s1, t0 //Just going with what CMP said... Never used this
 subu t1, t1, t0
 
-beq t1, zero, :_PJT_Exit
+bne t1, zero, :_PJT_Exit
 nop
 
 addiu v0, zero, 1

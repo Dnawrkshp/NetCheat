@@ -76,6 +76,13 @@ int main(int argc, char *argv[]) {
 	sbv_patch_disable_prefix_check();
 	
 	i = LoadSettings();
+	/*
+	//Static IP setup
+	i = 1;
+	strcpy((char*)ip, "192.168.1.139");
+	strcpy((char*)nm, "255.255.255.0");
+	strcpy((char*)gw, "192.168.1.1");
+	*/
 	
 	if (i >= 0) {
 		
@@ -84,11 +91,18 @@ int main(int argc, char *argv[]) {
 		
 		sprintf((char*)ipString, "IP Address: %s", ip);
 		UpdateMMenu("Not Connected!");
+		
+		/* Font spacing tests */
+		/*
+		UpdateMMenu(" !\"#$%&'()*+,-./0123456789:;<=>?"); //Rows 1 and 2
+		UpdateMMenu("@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"); //Rows 3 and 4
+		UpdateMMenu("`abcdefghijklmnopqrstuvwxyz{|}~?");  //Rows 5 and 6
+		*/
 	
 		StartServer();
 	} else {
 		strcpy((char*)ipString, "Failed to load settings file from:");
-		sprintf((char*)midS, "%s", (char*)sread);
+		strcpy((char*)midS, "mc?:/SYS-CONF/IPCONFIG.DAT");
 		UpdateMMenu((char*)midS);
 		SleepThread();
 	}

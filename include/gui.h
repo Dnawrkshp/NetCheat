@@ -14,11 +14,11 @@ extern void load_elf(char *elf_path);
 
 extern void background;
 extern void logo;
-extern void font;
+extern void font_bitsumishi;
 
 extern u32 size_background;
 extern u32 size_logo;
-extern u32 size_font;
+extern u32 size_font_bitsumishi;
 
 /* include font specific datas */
 #include "font.h"
@@ -42,9 +42,9 @@ void AnimateFade(int start, int cnd, int rate, int delay);
 int Draw_WaitMenu(int done, int max);
 
 GSGLOBAL *gsGlobal;
-GSTEXTURE tex_background;	//Background
-GSTEXTURE tex_logo;			//Logo
-GSTEXTURE tex_font;			//Font
+GSTEXTURE tex_background;		//Background
+GSTEXTURE tex_logo;				//Logo
+GSTEXTURE tex_font_bitsumishi;	//Font
 
 /* screen defaults for NTSC, just in case */
 int TV_mode       = 2;

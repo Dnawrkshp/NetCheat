@@ -9,12 +9,12 @@ EE_OBJS = src/main.o src/gui.o src/timer.o
 EE_OBJS += usbd.o usbhdfsd.o
 EE_OBJS += ps2smap.o ps2ip.o ps2ips.o ps2dev9.o dns.o poweroff.o
 EE_OBJS += elf_loader.o
-EE_OBJS += background.o logo.o font.o
+EE_OBJS += background.o logo.o font_bitsumishi.o
 
 EE_SRC = usbd.s usbhdfsd.s
 EE_SRC += ps2smap.s ps2ip.s ps2ips.s ps2dev9.s dns.s poweroff.s
 EE_SRC += elf_loader.s
-EE_SRC += background.s logo.s font.s
+EE_SRC += background.s logo.s font_bitsumishi.s
 
 EE_INCS = -I$(PS2DEV)/gsKit/include -I$(PS2SDK)/ports/include -I$(PS2SDK)/sbv/include
 EE_LDFLAGS = -nostartfiles -L$(PS2DEV)/gsKit/lib -L$(PS2SDK)/ports/lib \
@@ -72,8 +72,8 @@ background.s:
 	bin2s $(GUI)/background.png background.s background
 logo.s:
 	bin2s $(GUI)/logo.png logo.s logo
-font.s:
-	bin2s $(GUI)/font.png font.s font
+font_bitsumishi.s:
+	bin2s $(GUI)/font_bitsumishi.png font_bitsumishi.s font_bitsumishi
 
 #ELF Loader
 elf_loader.s:

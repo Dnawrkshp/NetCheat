@@ -122,8 +122,8 @@ int wMax = 15;										/* Number of modules to load */
 #endif
 
 /* Settings */
-char sread[1024];									/* Constructed path to settings file */
-char *sfile = "IPCONFIG.DAT";						/* File name of settings file */
+//char sread[1024];									/* Constructed path to settings file */
+//char *sfile = "IPCONFIG.DAT";						/* File name of settings file */
 char ip[13];										/* IP Address */
 char nm[13];										/* Netmask */
 char gw[13];										/* Gateway */

@@ -121,9 +121,9 @@ void pngClose(pngData *png) {
 }
 
 /*
- * Draw a character with neuropol font
+ * Draw a character with bitsumishi font
  */
-void drawChar(float x, float y, int alpha, u32 width, u32 height, u32 c) {
+void drawChar_bitsumishi(float x, float y, int alpha, u32 width, u32 height, u32 c) {
 	float x1, x2, y1, y2;
 	int u1, u2, v1, v2;
 
@@ -133,13 +133,13 @@ void drawChar(float x, float y, int alpha, u32 width, u32 height, u32 c) {
 	y2 = y1 + height;
 
 	c -= 32;
-	u1 = (c % (tex_font.Width/32)) * (tex_font.Width/16);
+	u1 = (c % (tex_font_bitsumishi.Width/32)) * (tex_font_bitsumishi.Width/16);
 	u2 = u1 + 32;
 	v1 = (c - (c % 16)) * 2; /* careful: 6 rows only !!! */
 	v2 = v1 + 32;
 
 	/* Draw a char using neuropol texture */
-	gsKit_prim_sprite_texture(gsGlobal, &tex_font,
+	gsKit_prim_sprite_texture(gsGlobal, &tex_font_bitsumishi,
 							x1, /* X1 */
 							y1,	/* Y1 */
 							u1, /* U1 */
@@ -149,14 +149,13 @@ void drawChar(float x, float y, int alpha, u32 width, u32 height, u32 c) {
 							u2, /* U2 */
 							v2, /* V2 */
 							0,
-							//GS_SETREG_RGBAQ(0x00, 0x00, 0x00, alpha, 0x00));
 							White);
 }
 
 /*
- * Draw a string with neuropol font
+ * Draw a string with bitsumishi font
  */
-void drawString(u32 x, u32 y, int alpha, int fontsize, int fontspacing, const char *string) {
+void drawString_bitsumishi(u32 x, u32 y, int alpha, int fontsize, int fontspacing, const char *string) {
 	int l, i;
 	float cx;
 	int c;
@@ -175,20 +174,20 @@ void drawString(u32 x, u32 y, int alpha, int fontsize, int fontspacing, const ch
 		}
 		
 		/* Draw the string character by character */
-		drawChar(cx, y, alpha, fontsize, fontsize * Y_RATIO, c);
+		drawChar_bitsumishi(cx, y, alpha, fontsize, fontsize * Y_RATIO, c);
 
 		/* Uses width informations for neuropol font header file */
 		if (c != 10) {
-			float f = font_width[c-32] * (float)(fontsize / 32.0f);
+			float f = font_bitsumishi_width[c-32] * (float)(fontsize / 32.0f);
 			cx += (float)(f + fontspacing);
 		}
 	}
 }
 
 /*
- * Calculate and return width in pixels of a string using neuropol font
+ * Calculate and return width in pixels of a string using bitsumishi font
  */
-int getStringWidth(const char *string, int fontsize, int fontspacing) {
+int getStringWidth_bitsumishi(const char *string, int fontsize, int fontspacing) {
 	int i, l, c;
 	float size;
 
@@ -199,7 +198,7 @@ int getStringWidth(const char *string, int fontsize, int fontspacing) {
 	for( i = 0; i < l; i++) {
 		c = (u8)string[i];
 		
-		float f = font_width[c-32] * (float)(fontsize / 32.0f);
+		float f = font_bitsumishi_width[c-32] * (float)(fontsize / 32.0f);
 		size += (float)(f + fontspacing);
 	}
 
@@ -207,9 +206,9 @@ int getStringWidth(const char *string, int fontsize, int fontspacing) {
 }
 
 /*
- * Calculate and return height in pixels of a string using neuropol font
+ * Calculate and return height in pixels of a string using bitsumishi font
  */
-int getStringHeight(const char *string, int fontsize) {
+int getStringHeight_bitsumishi(const char *string, int fontsize) {
 	int l, i, c;
 	int height = fontsize * Y_RATIO;
 
@@ -228,16 +227,16 @@ int getStringHeight(const char *string, int fontsize) {
 }
 
 /*
- * Draw a centered string with neuropol font
+ * Draw a centered string with bitsumishi font
  */
-void centerString(int y, int alpha, int fontsize, int fontspacing, const char *string) {
+void centerString_bitsumishi(int y, int alpha, int fontsize, int fontspacing, const char *string) {
 	int x, str_width;
 	
-	str_width = getStringWidth(string, fontsize, fontspacing);
+	str_width = getStringWidth_bitsumishi(string, fontsize, fontspacing);
 	
 	x = (SCREEN_WIDTH - str_width) / 2;
 	
-	drawString(x, y, alpha, fontsize, fontspacing, string);
+	drawString_bitsumishi(x, y, alpha, fontsize, fontspacing, string);
 }
 
 /*
@@ -384,24 +383,24 @@ void load_Font(void) {
 
 	/* gsGlobal->CurrentPointer = vram_pointer; */
 
-	if ((pPng = pngOpenRAW(&font, size_font)) > 0) { /* tex size = 0x140000 */
+	if ((pPng = pngOpenRAW(&font_bitsumishi, size_font_bitsumishi)) > 0) { /* tex size = 0x140000 */
 		if ((pImgData = malloc(pPng->width * pPng->height * (pPng->bit_depth / 8))) > 0) {
 			if (pngReadImage( pPng, pImgData ) != -1) {
-				tex_font.PSM 		= GS_PSM_CT32;
-				tex_font.Mem 		= (u32 *)pImgData;
-				tex_font.VramClut = 0;
-				tex_font.Clut		= NULL;
-				tex_font.Width    = pPng->width;
-				tex_font.Height   = pPng->height;
-				tex_font.Filter   = GS_FILTER_LINEAR;
+				tex_font_bitsumishi.PSM 		= GS_PSM_CT32;
+				tex_font_bitsumishi.Mem 		= (u32 *)pImgData;
+				tex_font_bitsumishi.VramClut = 0;
+				tex_font_bitsumishi.Clut		= NULL;
+				tex_font_bitsumishi.Width    = pPng->width;
+				tex_font_bitsumishi.Height   = pPng->height;
+				tex_font_bitsumishi.Filter   = GS_FILTER_LINEAR;
 				#ifdef DEBUG
 					printf("VRAM Pointer = %08x  ", gsGlobal->CurrentPointer);
 					printf("texture size = %x\n", gsKit_texture_size(pPng->width, pPng->height, GS_PSM_CT32));
 				#endif
-				tex_font.Vram 	= gsKit_vram_alloc(gsGlobal,
-			 						  		gsKit_texture_size(tex_font.Width, tex_font.Height, tex_font.PSM),
+				tex_font_bitsumishi.Vram 	= gsKit_vram_alloc(gsGlobal,
+			 						  		gsKit_texture_size(tex_font_bitsumishi.Width, tex_font_bitsumishi.Height, tex_font_bitsumishi.PSM),
 			 						  		GSKIT_ALLOC_USERBUFFER);
-				gsKit_texture_upload(gsGlobal, &tex_font);
+				gsKit_texture_upload(gsGlobal, &tex_font_bitsumishi);
 			}
 			pngClose(pPng);
 			free(pImgData);
@@ -542,8 +541,8 @@ int Draw_MainMenu(void) {
 	/* Draw logo */
 	draw_logo(logo_alpha);
 	
-	centerString(((SCREEN_HEIGHT/2) + 120) * Y_RATIO, 128, 30, 0, (char*)ipString);
-	centerString(((SCREEN_HEIGHT/2) + 160) * Y_RATIO, 128, 25, 0, (char*)midString);
+	centerString_bitsumishi(((SCREEN_HEIGHT/2) + 120) * Y_RATIO, 128, 30, 0, (char*)ipString);
+	centerString_bitsumishi(((SCREEN_HEIGHT/2) + 160) * Y_RATIO, 128, 25, 0, (char*)midString);
 	
     gsKit_set_test(gsGlobal, GS_ATEST_ON);
     
@@ -563,7 +562,7 @@ int Draw_WaitMenu(int done, int max) {
 	gsKit_set_test(gsGlobal, GS_ATEST_OFF);
 	
 	sprintf((char*)waitString, "Loading modules: %2.0f%c", ((float)done / (float)max) * 100, (char)'%');
-	centerString(((SCREEN_HEIGHT/2) + 120) * Y_RATIO, 128, 30, 0, (char*)waitString);
+	centerString_bitsumishi(((SCREEN_HEIGHT/2) + 120) * Y_RATIO, 128, 30, 0, (char*)waitString);
 	
 	Render_GUI();
     

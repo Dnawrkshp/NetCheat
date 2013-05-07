@@ -15,7 +15,7 @@
 
 //#define DEBUG
 
-/* Live Debug */
+/* CL-LiveDebug */
 #ifdef DEBUG
 #include "Exports/LiveDebug.c"
 #endif
@@ -73,12 +73,13 @@ void ResetCNF(void);
 void CleanUp(void);
 int _recv(int s, char *buf, int len, int flags, int mode);
 int _send(int s, char *buf, int len, int flags, int mode);
-void wait_for_okay(int s);
+void WaitForOkay(int s);
 int ReplyWithOkay(int s);
 void UpdateMMenu(char *text);
 int LoadSettings(void);
 int LoadModules(void);
 void delay(int count);
+int ReplyWithError(int s, char *str);
 
 /* From gui.c */
 extern void Setup_GS(int gs_vmode);
@@ -92,7 +93,7 @@ extern void load_background_Textures(void);
 extern void AnimateFade(int start, int cnd, int rate, int delay);
 extern void load_Font(void);
 extern int Draw_MainMenu(void);
-int Draw_WaitMenu(int done, int max);
+extern int Draw_WaitMenu(int done, int max);
 
 extern int SCREEN_WIDTH;
 extern int SCREEN_HEIGHT;
@@ -113,17 +114,24 @@ extern void TimerEnd(void);
 /* Global Declarations */
 int z = 0;											/* Server connection status */
 char *sys_cnf = "cdrom0:\\SYSTEM.CNF;1";			/* SYSTEM.CNF location */
-char *rep = "K"; 									/* Reply to manager with an okay to send */
 int wLoad = 0;										/* Number of modules loaded */
 #ifdef DEBUG
 int wMax = 11;										/* Number of modules to load */
 #else
-int wMax = 15;										/* Number of modules to load */
+int wMax = 14;										/* Number of modules to load */
 #endif
 
+/* Recieving values */
+#define 	ST_GM	0x1		/* Start game */
+#define 	D_CON	0x2		/* Disconnect */
+#define 	RCV_C	0x3		/* Receive codes */
+#define 	ALT_B	0x4		/* Alternative boot */
+#define 	STP_D	0x5		/* Stop disc */
+#define 	B_ELF	0x6		/* Receive and execute elf */
+
+/* Error values */
+
 /* Settings */
-//char sread[1024];									/* Constructed path to settings file */
-//char *sfile = "IPCONFIG.DAT";						/* File name of settings file */
 char ip[13];										/* IP Address */
 char nm[13];										/* Netmask */
 char gw[13];										/* Gateway */

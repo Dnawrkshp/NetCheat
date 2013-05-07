@@ -1,6 +1,10 @@
 #include "include/main.h"
 
 /*
+ * Many features taken from Berion's unfinished Artemis GUI
+ */
+
+/*
  *	Main function
  */
 int main(int argc, char *argv[]) {
@@ -144,43 +148,6 @@ int LoadModules(void) {
 	return ret;
 }
 
-#ifndef DEBUG //So there isn't a duplicate
-/*
- * Loads the array at ptr into the memory at addr
- */
-int InstallArray(int addr, void ** ptr, int size) {
-	int i = 0;
-	u32 Store = addr;
-	u32 Read = (u32)ptr;
-	
-	if (addr >= 0x80000000) { /* Kernel */
-		for (i = 0; i < size; i += 1)
-		{
-			DI();
-			ee_kmode_enter();
-			*(u8*)Store = *(u8*)Read;
-			ee_kmode_exit();
-			EI();
-			Store += 1;
-			Read += 1;
-		}
-	} else { /* EE */
-		for (i = 0; i < size; i += 1)
-		{
-			*(u8*)Store = *(u8*)Read;
-			Store += 1;
-			Read += 1;
-		}
-	}
-	
-	#ifdef DEBUG
-		printf("addr = %08x, ptr = %08x, size = %x (%d)\n", (int)addr, (int)ptr, (int)size, (int)size);
-	#endif
-	
-	return 1;
-}
-#endif
-
 /*
  * load an elf file using embedded elf loader
  * this allow to fix memory overlapping problem
@@ -223,32 +190,34 @@ void load_elf(char *elf_path, int code_len) {
 			memset(boot_pheader[i].vaddr + boot_pheader[i].filesz, 0, boot_pheader[i].memsz - boot_pheader[i].filesz);
 	}
 
-	#ifdef DEBUG
-	Install_LD();																	/* Install live debug */
-	
-	int joker_addr = 0x001EE682;													/* preset joker address */
-	DI();
-	ee_kmode_enter();
-		*(u32*)0x8007E7FC = (int)joker_addr;										/* 0 = use joker scanner */
-		*(u32*)0x8007E810 = (int)joker_addr;										/* preset joker address */
-	ee_kmode_exit();
-	EI();
-	#endif
-	
-	/* Setup engine */
-	DI();
-	ee_kmode_enter();
-		memcpy((u32*)EngineAddr, NCEngine, sizeof(NCEngine));						/* Install the LiveDebug v3 Engine into the kernel */
-		memset((u32*)CodesAddr, 0 , code_len + 8);									/* Clear code area */
-		memcpy((u32*)(CodesAddr + 8), (u32*)0x000F0000, code_len);					/* Install the codes into the kernel */
-		*(u32*)CodesAddr = (CodesAddr + 0x10); 										/* Pointer to current code */
-		*(u32*)HookAddr = HookValue;												/* Install the kernel hook */
-	ee_kmode_exit();
-	EI();
-	
-	#ifdef DEBUG
-	printf("Installed hook (0x%08x) at 0x%08x\n", HookValue, HookAddr);
-	#endif
+	if (code_len != 0) {
+		#ifdef DEBUG
+		Install_LD();																	/* Install live debug */
+		
+		int joker_addr = 0x001EE682;													/* preset joker address */
+		DI();
+		ee_kmode_enter();
+			*(u32*)0x8007E7FC = (int)joker_addr;										/* 0 = use joker scanner */
+			*(u32*)0x8007E810 = (int)joker_addr;										/* preset joker address */
+		ee_kmode_exit();
+		EI();
+		#endif
+		
+		/* Setup engine */
+		DI();
+		ee_kmode_enter();
+			memcpy((u32*)EngineAddr, NCEngine, sizeof(NCEngine));						/* Install the LiveDebug v3 Engine into the kernel */
+			memset((u32*)CodesAddr, 0 , code_len + 8);									/* Clear code area */
+			memcpy((u32*)(CodesAddr + 8), (u32*)0x000F0000, code_len);					/* Install the codes into the kernel */
+			*(u32*)CodesAddr = (CodesAddr + 0x10); 										/* Pointer to current code */
+			*(u32*)HookAddr = HookValue;												/* Install the kernel hook */
+		ee_kmode_exit();
+		EI();
+		
+		#ifdef DEBUG
+		printf("Installed hook (0x%08x) at 0x%08x\n", HookValue, HookAddr);
+		#endif
+	}
 	
 	/* Cleanup before launching elf loader */
 	CleanUp();
@@ -342,18 +311,6 @@ int LoadIRX()
 	return 0;
 }
 
-void spinCD(void) {
-	/* From Cora Dumper */
-	//cdTrayReq(0,0x00490000);
-	
-	//cdDiskReady(0);
-	// Spin up the cd/dvd
-	//cdStandby();
-	
-	//int fd = fioOpen(sys_cnf, O_RDONLY);
-	//fioClose(fd);
-}
-
 //----------------------------------------------------------------
 int     get_CNF_string(u8 **CNF_p_p, u8 **name_p_p, u8 **value_p_p) //Taken from uLaunchElf
 {
@@ -433,87 +390,6 @@ int ParseSYSTEMCNF(char *system_cnf, char *boot_path) //Taken from IGmassdumper
         return 1;
 }
 
-char *ReadIP()
-{
-
-	int fp, fpSize;
-	char *result = NULL;
-	fp = fioOpen("mc0:/IP.txt", O_RDONLY);
-
-	if (fp < 0)
-	{
-		#ifdef DEBUG
-			printf("	mc0:/IP.txt does not exist!\n");
-		#endif
-	}
-	else
-	{
-
-	fpSize = fioLseek(fp, 0, SEEK_END);
-	fioLseek(fp, 0, SEEK_SET);
-	
-	result = malloc(fpSize + 1);
-	fioRead(fp, result, fpSize);
-	fioClose(fp);
-	
-}
-
-	return result;
-
-}
-
-char *ReadNM()
-{
-
-	int fp, fpSize;
-	char *result = NULL;
-	fp = fioOpen("mc0:/NM.txt", O_RDONLY);
-
-	if (fp < 0)
-	{
-		
-	}
-	else
-	{
-
-	fpSize = fioLseek(fp, 0, SEEK_END);
-	fioLseek(fp, 0, SEEK_SET);
-	
-	result = malloc(fpSize + 1);
-	fioRead(fp, result, fpSize);
-	fioClose(fp);
-	
-}
-	return result;
-
-}
-
-char *ReadGW()
-{
-
-	int fp, fpSize;
-	char *result = NULL;
-	fp = fioOpen("mc0:/GW.txt", O_RDONLY);
-
-	if (fp < 0)
-	{
-	}
-	else
-	{
-
-	fpSize = fioLseek(fp, 0, SEEK_END);
-	fioLseek(fp, 0, SEEK_SET);
-	
-	result = malloc(fpSize + 1);
-	fioRead(fp, result, fpSize);
-	fioClose(fp);
-	
-}
-
-	return result;
-
-}
-
 void UpdateMMenu(char *text) {
 		strcpy((char*)midString, (char*)text);
 		while (!Draw_MainMenu())
@@ -525,16 +401,14 @@ int StartServer() {
 	
 	int n = 0;
 	
-	//ip_addr ip;
-	//cdTrayReq(0, (u32*)0x00490000);
-	
 	int sockfd, newsockfd, portno = 2345;
     socklen_t clilen;
 	
     struct sockaddr_in serv_addr, cli_addr;
-    sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP );
+    sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sockfd < 0)
 	{
+		UpdateMMenu("Failed to create socket");
 		SleepThread();
 	}
 
@@ -547,146 +421,116 @@ int StartServer() {
 	
     if (bind(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0)
 	{
-		return -1;
+		UpdateMMenu("Failed to bind socket");
+		SleepThread();
 	}
 	
-	//setsockopt(sockfd, IPPROTO_TCP, O_NONBLOCK, 0, int optlen);
-	
-	/*
-	scr_printf("	Port: %d\n", portno);\
-	
-	scr_printf("	IP: %s\n", "10.0.1.100");//ReadIP());
-
-	scr_printf("	Listening for any incoming connection...\n");
-	*/
-	
-	while ( 1 ) //If sudden disconnect, the loop will reset and wait for the PC to reconnect
+	while ( 1 ) /* If sudden disconnect, the loop will reset and wait for the PC to reconnect */
 	{
-		
-		char *buffer = (char*)malloc(1024); //1 kilobyte
+		z = 0;
+		char *buffer = (char*)malloc(2);
 		memset((char*)buffer, 0, sizeof(buffer));
 		char *buf_codes = NULL;
+		char belf[40];
+		char startgm[1024];
+		int code_len = 0;
 		
 		listen(sockfd, 5);
 		clilen = sizeof(cli_addr);
 		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-	
-		char belf[40];
-		//ParseSYSTEMCNF(sys_cnf, (char*)belf);
-		
-		UpdateMMenu("Connected");
-		
-		//char codewait[] = "(PS2) Waiting for codes!\n";
-		//char recvcode[] = "(PS2) Codes recieved!\n";
-		char startgm[1024];
-		//char altboot[1024];
-		//sprintf(altboot, "(PS2) Booting %s with method 2\n", (char*)belf);
-		int code_len = 0;
 		
 		if (newsockfd < 0) 
 		{
-			
+			UpdateMMenu("Error creating new socket!");
+			free((char*)buffer);
+			SleepThread();
 		}
 		
-		z = 0;
-		//send(newsockfd, codewait, strlen(codewait), 0);	
+		UpdateMMenu("Connected to PC");
 		
 		while ( z >= 0 ) /* The PC will send a packet containing "Dis" when it closes or disconnects. It will then set z < 0 on disconnect. */
 		{
 			
-			n = _recv(newsockfd, buffer, 2, 0, 0);
-			if (n < 0) { n = -1; } else { buffer[1] = '\0'; }
-			n = 0;
-
-			//n = send(newsockfd,"Recieved!\n", 18, 0);	
+			n = _recv(newsockfd, buffer, 1, 0, 0);
+			if (n < 0) { z = -1; } else { buffer[1] = '\0'; }
+			printf("recv = %d\n", (int)(*(char*)buffer));
 		
-			//scr_printf("	Recieved: %s\n", buffer);
-		
-			if ( strcmp(buffer, "0") == 0) /* Start game */
-			{	
-				ParseSYSTEMCNF(sys_cnf, belf);
-				if( (char*)belf == NULL)
-				{
+			switch ( (int)(*(char*)buffer) ) {	
+				
+				case (int)ST_GM: /* Start game */
+					ParseSYSTEMCNF(sys_cnf, belf);
+					if( (char*)belf == NULL)
+					{
+						#ifdef DEBUG
+							printf("	Could not read system.cnf\n");
+						#endif
+						SleepThread();
+					}
+					
+					sprintf(startgm, "Booting %s\n", (char*)belf);
+					z = _send(newsockfd, startgm, strlen(startgm), 0, 0);
+					
+					close(newsockfd);
+					close(sockfd);
+					
+					AnimateFade(128, 0, -1, 10000);
+					
+					free((char*)buffer);
+					load_elf((char*)belf, code_len);
+					break;
+					
+				case (int)D_CON: /* Disconnect */
+					z = -1;
+					break;
+					
+				case (int)RCV_C: /* Receive codes */
+					ReplyWithOkay(newsockfd);
+					
+					_recv(newsockfd, buffer, 10, 0, 0);
+					code_len = atoi(buffer);
+					
+					ReplyWithOkay(newsockfd);
+					
+					buf_codes = (char*)malloc(code_len + 8);
+					memset((char*)buf_codes, 0, code_len + 8);
+					
+					_recv(newsockfd, buf_codes, code_len, 0, 2);
+					memcpy((u32*)0x000F0000, buf_codes, code_len);
+					free(buf_codes);
+					
+					z = _send(newsockfd, "Received codes!", strlen("Received codes!"), 0, 0);
+					
 					#ifdef DEBUG
-						printf("	Could not read system.cnf\n");
+						printf("Recieved %i lines of code (%.02f kb)\n", code_len / 8, (float)code_len / 1024);
 					#endif
-					SleepThread();
-				}
-				
-				sprintf(startgm, "Booting %s\n", (char*)belf);
-				z = _send(newsockfd, startgm, strlen(startgm), 0, 0);
-				
-				close(newsockfd);
-				close(sockfd);
-				
-				AnimateFade(128, 0, -1, 10000);
-			
-				load_elf((char*)belf, code_len);
-				//load_elf("mc0:/ps2link/ps2link.elf");
-				//ExecGame(0, elf, 0x80030100);
-			} else if (strcmp(buffer, "1") == 0) { /* Disconnect */
-				z = -1;
-			} else if (strcmp(buffer, "2") == 0) { /* Receive codes */
-				char *temp = "Send em!";
-				z = _send(newsockfd, temp, strlen(temp), 0, 0);
-				
-				_recv(newsockfd, buffer, 10, 0, 0);
-				code_len = atoi(buffer);
-				
-				ReplyWithOkay(newsockfd);
-				
-				buf_codes = (char*)malloc(code_len + 8);
-				memset((char*)buf_codes, 0, code_len + 8);
-				
-				_recv(newsockfd, buf_codes, code_len, 0, 2);
-				temp = "Recieved codes!";
-				//printf("buffer:\n%s\n", buffer);
-				memcpy((u32*)0x000F0000, buf_codes, code_len);
-				free(buf_codes);
-				//printf("\na = %i\nbuffer: %s\n", a, buffer);
-				
-				z = _send(newsockfd, temp, strlen(temp), 0, 0);
-				
-				wait_for_okay(newsockfd);
-				#ifdef DEBUG
-					printf("Recieved %i lines of code (%.02f kb)\n", code_len / 8, (float)code_len / 1024);
-				#endif
-				
-				sprintf((char*)midS, "Recieved %i lines of code (%.02f kb)", code_len / 8, (float)code_len / 1024);
-				UpdateMMenu((char*)midS);
-				
-				//scr_printf("\tRecieved %i lines of code (%.02f kb)\n", code_len / 8, (float)code_len / 1024);
-				
-			} else if ( strcmp(buffer, "3") == 0 ) { /* Boot custom boot path */
-				
-				
-				memset((char*)buffer, 0, 100);
-				_recv(newsockfd, buffer, 100, 0, 0);
-				
-				close(newsockfd);
-				close(sockfd);
-				
-				AnimateFade(128, 0, -1, 10000);
-			
-				load_elf((char*)buffer, code_len);
-			} else if ( strcmp(buffer, "4") == 0 ) { /* Stop Disc */
-				
-				StopDisc();
-				
-				ReplyWithOkay(newsockfd);
-				
+					
+					sprintf((char*)midS, "Recieved %i lines of code (%.02f kb)", code_len / 8, (float)code_len / 1024);
+					UpdateMMenu((char*)midS);
+					break;
+				case (int)ALT_B: /* Boot alternative path */
+					memset((char*)buffer, 0, 100);
+					_recv(newsockfd, buffer, 100, 0, 0); /* Get path */
+					
+					/* Close sockets */
+					close(newsockfd);
+					close(sockfd);
+					
+					AnimateFade(128, 0, -1, 10000);
+					free((char*)buffer);
+					load_elf((char*)buffer, code_len);
+					break;
+					
+				case (int)STP_D: /* Stop Disc */
+					StopDisc();
+					ReplyWithOkay(newsockfd);
+					break;
 			}
-		
 		}
 		
 		free(buffer);
 		close(newsockfd);
 		
 		UpdateMMenu("Not Connected!");
-		
-		//scr_printf("	IP: %s\n", ReadIP()); /* Print out IP in case of sudden disconnect */
-		//scr_printf("	Waiting for connection...\n"); /* Prints that the ps2 is listening for a connection, loops back to the main loop */
-		
 		}
 		
     close(newsockfd);
@@ -698,10 +542,6 @@ int StartServer() {
 
 void StopDisc(void)
 {
-	/*
-	loadmodulemem(iopmod, 1865, 0, 0);
-	wLoad++; Draw_WaitMenu(wLoad, wMax);
-	*/
 	fioOpen("qwerty:r",1); // Wait for the disc to be ready
 	
 	/* It seems I don't need this... hehe */
@@ -711,7 +551,7 @@ void StopDisc(void)
 
 	SifInitRpc(0);
 	LoadModules();
-	//LoadIRX();
+	LoadIRX();
 	*/
 
 	fioOpen("qwerty:c",1); // Set LBA to 0
@@ -810,15 +650,19 @@ int _send(int s, char *buf, int len, int flags, int mode) {
 	return 0;
 }
 
-void wait_for_okay(int s) {
-	char temp[6];
+void WaitForOkay(int s) {
+	char temp[2];
 	do {
-		recv(s, temp, 5, 0);
-	} while ( strcmp(temp, "Okay") != 0 ); //Loops until "Okay" is recieved
+		recv(s, temp, 2, 0);
+	} while ( strcmp(temp, "K") != 0 ); //Loops until "K" is recieved
 }
 
 int ReplyWithOkay(int s) {
-	return _send(s, (char*)rep, strlen((char*)rep), 0, 1);
+	return _send(s, "K", 2, 0, 1);
+}
+
+int ReplyWithError(int s, char *str) {
+	return _send(s, (char*)str, strlen((char*)str), 0, 1);
 }
 
 int LoadSettings(void) {

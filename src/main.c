@@ -124,15 +124,14 @@ int LoadModules(void) {
 	SifInitRpc(0);
 
 	// Load modules off ROM
-	ret = SifLoadModule("rom0:SIO2MAN", 0, NULL);
+	ret += SifLoadModule("rom0:SIO2MAN", 0, NULL);
 	wLoad++; Draw_WaitMenu(wLoad, wMax);
-	ret = SifLoadModule("rom0:MCMAN", 0, NULL);
+	ret += SifLoadModule("rom0:MCMAN", 0, NULL);
 	wLoad++; Draw_WaitMenu(wLoad, wMax);
-	ret = SifLoadModule("rom0:MCSERV", 0, NULL);
+	ret += SifLoadModule("rom0:MCSERV", 0, NULL);
 	wLoad++; Draw_WaitMenu(wLoad, wMax);
-	ret = SifLoadModule("rom0:CDVDMAN", 0, NULL);
-	///ret = SifLoadModule("rom0:LIBSD", 0, NULL);
-
+	
+	
 	// Modules from PS2SDK
 	SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, &ret);
 	wLoad++; Draw_WaitMenu(wLoad, wMax);
@@ -142,7 +141,7 @@ int LoadModules(void) {
 	// QWERTY Module from CogSwap
 	loadmodulemem(iopmod, 1865, 0, 0);
 	wLoad++; Draw_WaitMenu(wLoad, wMax);
-
+	
 	SifLoadFileExit();
 	
 	return ret;
@@ -428,7 +427,7 @@ int StartServer() {
 	while ( 1 ) /* If sudden disconnect, the loop will reset and wait for the PC to reconnect */
 	{
 		z = 0;
-		char *buffer = (char*)malloc(2);
+		char *buffer = (char*)malloc(1024);
 		memset((char*)buffer, 0, sizeof(buffer));
 		char *buf_codes = NULL;
 		char belf[40];

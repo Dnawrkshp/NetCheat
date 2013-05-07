@@ -127,9 +127,9 @@ int wMax = 14;										/* Number of modules to load */
 #define 	RCV_C	0x3		/* Receive codes */
 #define 	ALT_B	0x4		/* Alternative boot */
 #define 	STP_D	0x5		/* Stop disc */
-#define 	B_ELF	0x6		/* Receive and execute elf */
 
 /* Error values */
+
 
 /* Settings */
 char ip[13];										/* IP Address */

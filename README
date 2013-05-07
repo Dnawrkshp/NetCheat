@@ -7,10 +7,10 @@ Status: Done-ish. It's not "done", but it's really damn close.
 This is my alternative to CodeMajic and CodeBreaker. It combines CB's codetypes with CM's network and massive codelist capabilites.
 NetCheat supports around 3584 codes. Which turns out to be exactly 28 kilobytes..
 The codes are memcpy'd into 0x80079000 and can range to 0x80080000. The engine is placed at 0x80047000. NetCheat hooks itself to 0x800001A0.
-These places worked well with both CL-LiveDebug, OPL, and ESR.
+These places worked well with CL-LiveDebug (when in DEBUG mode), OPL, and ESR.
 
 DEBUG mode:
-When in DEBUG mode, CL-LiveDebug is installed with NetCheat and uses the kernel hook 0x800001A0. NetCheat uses the kernel hook 0x800002FC.
+When in DEBUG mode, CL-LiveDebug is installed with NetCheat and is hooked to 0x800001A0. NetCheat is hooked to 0x800002FC.
 
 CREDITS:
 

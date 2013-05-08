@@ -21,7 +21,7 @@ extern u32 size_logo;
 extern u32 size_font_bitsumishi;
 
 /* include font specific datas */
-#include "font.h"
+#include "include/font_bitsumishi.h"
 
 struct about_content {
 	char *name;

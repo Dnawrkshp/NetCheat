@@ -1,6 +1,6 @@
 EE_BIN = NetCheat.elf
 EE_BIN_PACKED = NC.elf
-EE_BIN_DIR = NetCheat
+EE_BIN_DIR = bin
 IRX = $(PS2SDK)/iop/irx
 IP_ADDR = 10.0.1.100
 GUI = gui

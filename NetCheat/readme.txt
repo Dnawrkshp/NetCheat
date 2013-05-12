@@ -1,5 +1,8 @@
 NetCheat consists of NetCheat.elf, NetCheatManager.exe, cb2util (made by misfire), and zlib.dll
 Developed by Dnawrkshp and ORCXodus
+Product of hardwork and http://www.cod-orc.com/customwarez.htm
+
+Source code can be grabbed at my GitHub: www.GitHub.com/Dnawrkshp
 
 Maximum code limits:
 OpenPS2Loader: 		8192 lines of code

@@ -1,4 +1,5 @@
 NetCheat - consists of NetCheat.elf, NetCheatManager.exe, cb2util (made by misfire), and zlib.dll
+Product of hardwork and http://www.cod-orc.com/customwarez.htm
 Developed by Dnawrkshp and ORCXodus
 ========
 GUI functions by Berion.
@@ -95,4 +96,21 @@ The engine will run dd times before executing a jalr to aaaaaaa
 Example:
 F100000E 000C0000
 
+------------------------- Code Type F2
+Switch Conditional
+F200nnnn taaaaaaa
+xxxxxxxx yyyyyyyy
+
+n: number of lines to execute under it if on
+t: comparison type (0 = 8 bit, 1 = 16bit, 2 = 32bit)
+a: address
+x: off value
+y: on value
+
+Example:
+F2000001 101EE682
+0000FFF9 0000FFF6
+20347E8C 00000000
+
+-------------------------
 The rest can once again be accessed at: http://www.codemasters-project.net/guides/showentry.php?e=847

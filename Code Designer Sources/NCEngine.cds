@@ -311,7 +311,7 @@ jal :_B
 nop
 beq zero, zero, :_ERROR
 
-//32-bit joker
+//32-bit conditional
 addiu t0, zero, $000C
 bne s2, t0, 4
 nop
@@ -319,7 +319,7 @@ jal :_C
 nop
 beq zero, zero, :_ERROR
 
-//16-bit joker
+//single-line conditional
 addiu t0, zero, $000D
 bne s2, t0, 4
 nop
@@ -327,7 +327,7 @@ jal :_D
 nop
 beq zero, zero, :_ERROR
 
-//multi-line 16-bit joker
+//multi-line conditional
 addiu t0, zero, $000E
 bne s2, t0, 4
 nop
@@ -983,7 +983,7 @@ addiu sp, sp, $0010
 
 //==================================================
 /*
-16-bit conditional (joker)
+single-line conditional (joker)
 
 Daaaaaaa 00twvvvv
 
@@ -1092,58 +1092,6 @@ lq ra, $0000(sp)
 lq s2, $0010(sp)
 jr ra
 addiu sp, sp, $0020
-
-//==================================================
-/*
-Switch joker
-Example:
-F01EE682 FFF9FFF6
-20347E8C 00000000
-F is the command
-001EE682 is the joker address
-FFF9 is off combo
-FFF6 is on combo
-*/
-/*
-_F:
-addiu sp, sp, $FFF0
-sq ra, $0000(sp)
-
-//ori t0, zero, $C000 //Offset
-//daddu s3, s7, t0 //Get switches address (0x00010000 more than the pointer to the code)
-daddu s3, s7, zero
-
-lb t0, $0003(s3)
-sll t0, t0, 6
-srl t0, t0, 31
-
-bne t0, zero, 2
-nop
-//Off - It adds to the counter - effectively skipping the next code
-daddu s7, s7, at
-
-lhu t0, $0000(s0) //Get joker
-
-sll t1, s1, 16
-srl t1, t1, 16 //On combo
-srl t2, s1, 16 //Off combo
-
-bne t0, t1, :_Foff
-nop
-//On combo
-addiu v0, zero, 1
-sw v0, $0000(s3)
-
-_Foff:
-bne t0, t2, :_FExit
-nop
-sw zero, $0000(s3)
-
-_FExit:
-lq ra, $0000(sp)
-jr ra
-addiu sp, sp, $0010
-*/
 
 //==================================================
 /*
@@ -1348,159 +1296,6 @@ lq s5, $0030(sp)
 jr ra
 addiu sp, sp, $0040
 
-//================================================
-/*
-Finding a free region of memory
-Reads the joker from address (s0)
-It will output the result to the value you place (s1)
-The command can be whatever you desire
-Joker trigger is always FFF9 (L3 + R3)
-
-Example:
-?01EE682 009FB130
-
-Reads joker from 001EE682
-Outputs result as string to 009FB130
-*/
-/*
-_FindR:
-addiu sp, sp, $FFF0
-sq ra, $0000(sp)
-
-lhu t0, $0000(s0)
-
-addiu v0, zero, $FFF9
-bne t0, v0, :_FindRExit
-nop
-jal :_FindOPL
-nop
-
-_FindRExit:
-
-lq ra, $0000(sp)
-jr ra
-addiu sp, sp, $0010
-
-//========================================================
-_FindOPL:
-addiu sp, sp, $FFD0
-sq s0, $0000(sp)
-sq s1, $0010(sp)
-sq ra, $0020(sp)
-
-lui a0, $0008
-lui a1, $0010
-jal :_FindFreeRegion
-daddu a2, zero, $2000
-
-daddu a0, s1, zero
-daddu a1, v0, zero
-
-jal :_ConvertToString
-addiu a2, zero, $0008
-
-_FOExit:
-lq s0, $0000(sp)
-lq s1, $0010(sp)
-lq ra, $0020(sp)
-jr ra
-addiu sp, sp, $0030
-
-//Convert to string pulled from Socom 2 trainer
-_ConvertToString:
-addiu sp, sp, $FFD0
-sw ra, $0000(sp)
-sw s0, $0004(sp)
-sw s1, $0008(sp)
-sw s2, $000C(sp)
-daddu s0, a0, zero
-daddu s1, a1, zero
-daddu s2, a2, zero
-addu s0, s0, s2
-//sb zero, $0000(s0)
-addiu s0, s0, $FFFF
-srl a0, s1, 4
-sll a0, a0, 4
-subu a0, s1, a0
-srl s1, s1, 4
-addiu a0, a0, $0030
-slti v0, a0, $003A
-bne v0, zero, 2
-nop
-addiu a0, a0, $0007
-sb a0, $0000(s0)
-addiu s0, s0, $FFFF
-addiu s2, s2, $FFFF
-bne s2, zero, -13
-nop
-lw ra, $0000(sp)
-lw s0, $0004(sp)
-lw s1, $0008(sp)
-lw s2, $000C(sp)
-jr ra
-addiu sp, sp, $0030
-
-//===============================================================
-//a0 = Start address
-//a1 = Address limit
-//a2 = Size of block
-//returns v0 as pointer to beginning of memory
-_FindFreeRegion:
-addiu sp, sp, $FFB0
-sq s0, $0000(sp)
-sq s1, $0010(sp)
-sq s2, $0020(sp)
-sq s3, $0030(sp)
-sq s4, $0040(sp)
-
-daddu s0, a0, zero //Start addr
-daddu s1, a1, zero //Addr limit
-daddu s2, a2, zero //Size of block
-daddu s3, zero, zero, //Counter
-daddu v0, zero, zero
-
-_FFRReLoop:
-daddu s4, s0, zero //Place holder for return
-
-_FFRLoop:
-slt t0, s0, s1
-beq t0, zero, :_FFREnd
-nop
-
-lq t0, $0000(s0)
-
-bne t0, zero, :_FFRNotZ
-nop
-
-slt t0, s3, s2
-beq t0, zero, :_FFRFoundR
-nop
-
-addiu s3, s3, $0010
-beq zero, zero, :_FFRLoop
-addiu s0, s0, $0010
-
-_FFRNotZ:
-addiu s0, s4, $0100 //Skip 0x800 addresses (for sake of speed)
-addu s0, s0, s3
-daddu s3, zero, zero
-
-beq zero, zero, :_FFRReLoop
-nop
-
-_FFRFoundR:
-daddu v0, s4, zero
-
-_FFREnd:
-lq s0, $0000(sp)
-lq s1, $0010(sp)
-lq s2, $0020(sp)
-lq s3, $0030(sp)
-lq s4, $0040(sp)
-jr ra
-addiu sp, sp, $0050
-*/
-
 //==================================================
 /*
 Parse joker type
@@ -1513,7 +1308,7 @@ a3 = width (byte, half, word: 0, 1, 2)
 Return:
 v0 = 1 if true, 0 if false
 
-From CMP.net
+From Codemasters-project.net
 *
 0 - Equal-to (value = xxxx).
 *

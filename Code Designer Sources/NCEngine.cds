@@ -2,12 +2,10 @@
 /*
 NetCheat engine
 Written by Dnawrkshp
-
-Better description of codetypes with the exception of 9 and F:
-http://www.codemasters-project.net/guides/showentry.php?e=847
 */
 
-address $00047000
+address $00047010
+//address $00060010
 
 _init:
 addiu sp, sp, $FFE0
@@ -61,15 +59,18 @@ sq fp, $01b0(sp)
 sq gp, $01c0(sp)
 sq ra, $01d0(sp)
 
-//Constant, do not change
-lui k0, $8007
-ori k0, k0, $9000
+//Location of pointer to current code - based around address of Engine
+setreg k0, :_init
+addiu k0, k0, $FFF0
+lui at, $8000
+daddu k0, at, k0
+
 //Constant, used for incrementing each code
 addiu at, zero, $0008
 
 //Check if a process of this is already going
 //If it is, exit. Credit to Gtlcpimp
-//CL-LiveDebug doesn't like this... so just a to check whether in DEBUG mode
+//CL-LiveDebug doesn't like this... so just to check whether in DEBUG mode
 lui v0, $8000
 ori v0, v0, $0234 //Hooked with a jalr k0 (DEBUG mode), else with a jr k0
 beq ra, v0, 6
@@ -83,8 +84,9 @@ sb t0, $FFFC(k0)
 
 //Look for mastercode (9 type)
 //If it's not there then continue
-lw t0, $0008(k0) //Mastercode address
-lw t1, $000C(k0) //Mastercode value
+lw t1, $0000(k0)
+lw t0, $FFF8(t1) //Mastercode address
+lw t1, $FFFC(t1) //Mastercode value
 
 beq t0, zero, 4 //No mastercode
 nop
@@ -112,7 +114,7 @@ beq zero, zero, :_NCLoop
 nop
 
 _NCExit: //NetCheat Exit and Reset
-addiu t0, k0, $0010
+lw t0, $FFF8(k0) //Initial pointer
 sw t0, $0000(k0)
 
 _NCExitNotDone: //NetCheat Exit (More Codes Left, 256 max limit reached)
@@ -222,8 +224,8 @@ sq s4, $0050(sp)
 
 daddu s0, a0, zero //addr
 daddu s1, a1, zero //value
-daddu s2, a2, zero //8 bit command
-daddu s3, a3, zero //16 bit command
+daddu s2, a2, zero //4 bit command
+daddu s3, a3, zero //8 bit command
 
 addiu v0, zero, $000B
 beq s2, v0, 3
@@ -339,15 +341,6 @@ jal :_E
 nop
 beq zero, zero, :_ERROR
 
-/*
-//Switch joker
-addiu t0, zero, $00F0
-bne s3, t0, 4
-nop
-jal :_F
-nop
-*/
-
 //Hook
 addiu t0, zero, $00F1
 bne s3, t0, 4
@@ -356,6 +349,15 @@ jal :_F1
 daddu a1, s1, zero
 beq zero, zero, :_ERROR
 
+//Switch conditional
+addiu t0, zero, $00F2
+bne s3, t0, 4
+nop
+jal :_F2
+daddu a1, s1, zero
+beq zero, zero, :_ERROR
+
+nop
 //Unsupported command or done processing code
 _ERROR:
 daddu s7, s7, at
@@ -1241,6 +1243,116 @@ addiu sp, sp, $0200
 _F1Exit:
 jr ra
 sb t0, $0001(s7)
+
+//==================================================
+/*
+Switch Conditional
+F200nnnn taaaaaaa
+xxxxxxxx yyyyyyyy
+
+n: number of lines to execute under it if on
+t: comparison type (0 = 8 bit, 1 = 16bit, 2 = 32bit)
+a: address
+x: off value
+y: on value
+
+Example:
+F2000001 101EE682
+0000FFF9 0000FFF6
+20347E8C 00000000
+*/
+_F2:
+addiu sp, sp, $FFC0
+sq ra, $0000(sp)
+sq s1, $0010(sp)
+sq s4, $0020(sp)
+sq s5, $0030(sp)
+
+daddu s7, s7, at
+
+srl s4, s1, 28 //t
+sll t0, s4, 28
+subu s1, s1, t0, //a
+
+sll s5, s0, 16
+srl s5, s5, 16 //n
+multu s5, s5, at
+//daddu s5, s7, s5 //next code after this and what follows this
+
+//beq zero, zero, :_F2Exit
+nop
+
+sltiu t0, s4, 4
+beq t0, zero, :_F2Exit //Unsupported comparison type
+nop
+
+bne s4, zero, 4 //8 bit
+nop
+lbu t0, $0000(s1)
+lbu t1, $0000(s7) //off
+lbu t2, $0004(s7) //on
+
+addiu v0, zero, $0001
+bne s4, v0, 4 //16 bit
+nop
+lhu t0, $0000(s1)
+lhu t1, $0000(s7) //off
+lhu t2, $0004(s7) //on
+
+addiu v0, zero, 2
+bne s4, v0, 4 //16 bit
+nop
+lw t0, $0000(s1)
+lw t1, $0000(s7) //off
+lw t2, $0004(s7) //on
+
+bne t0, t2, :_F2OffCheck
+nop
+//On
+addiu v0, zero, $0010
+
+beq zero, zero, :_F2Exec2
+sb v0, $FFFA(s7) //Update value
+
+_F2OffCheck:
+bne t0, t1, :_F2Exec
+nop
+//Off
+beq zero, zero, :_F2Exit
+sb zero, $FFFA(s7) //Update value
+
+_F2Exec:
+sll v0, s0, 8
+srl v0, v0, 28 //Get byte bool
+beq v0, zero, :_F2Exit
+nop
+_F2Exec2:
+
+daddu s4, s7, at
+daddu s1, s4, s5
+
+_F2Loop:
+beq s4, s1, :_F2Exit
+nop
+
+lw t0, $0000(s4)
+beq t0, zero, :_F2Exit
+nop
+
+jal :_code
+daddu a0, s4, zero
+
+beq zero, zero, :_F2Loop
+daddu s4, v0, zero
+
+_F2Exit:
+daddu s7, s7, s5
+lq ra, $0000(sp)
+lq s1, $0010(sp)
+lq s4, $0020(sp)
+lq s5, $0030(sp)
+jr ra
+addiu sp, sp, $0040
 
 //================================================
 /*

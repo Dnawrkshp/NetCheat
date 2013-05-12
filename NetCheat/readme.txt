@@ -1,6 +1,12 @@
 NetCheat consists of NetCheat.elf, NetCheatManager.exe, cb2util (made by misfire), and zlib.dll
 Developed by Dnawrkshp and ORCXodus
 
+Maximum code limits:
+OpenPS2Loader: 		8192 lines of code
+ESR:				Unknown (probably the same as a disc)
+Disc:				10752 lines of code
+DEBUG mode:			2832 lines of code
+
 IP Settings:
 NetCheat uses the same file that uLaunchELF uses for your network config.
 That file should be at mc?:/SYS-CONF/IPCONFIG.DAT, where ? is either a 0 or a 1.
@@ -8,19 +14,9 @@ If you have uLaunchELF, then you can go to the settings menu (SELECT) and going 
 Then you will be able to change your IP address, netmask, and gateway.
 
 Labels:
-Currently the only labels supported are ones with C style comments.
-For instance, if I had a code with a label "Infinite Health" it would like like this:
-//Infinite Health
-
-If I had a label that used multiple lines like so:
-This code does something rather amazing...
-Press Up and L1 to find out
-
-It would be commented as such:
-/*
-This code does something rather amazing...
-Press Up and L1 to find out
-*/
+Supports standard labels:
+Rapid fire
+20347E8C 00000000
 
 NetCheat codetypes:
 For all the codetypes not explained, please refer to this: http://www.codemasters-project.net/guides/showentry.php?e=847
@@ -95,4 +91,21 @@ The engine will run dd times before executing a jalr to aaaaaaa
 Example:
 F100000E 000C0000
 
+------------------------- Code Type F2
+Switch Conditional
+F200nnnn taaaaaaa
+xxxxxxxx yyyyyyyy
+
+n: number of lines to execute under it if on
+t: comparison type (0 = 8 bit, 1 = 16bit, 2 = 32bit)
+a: address
+x: off value
+y: on value
+
+Example:
+F2000001 101EE682
+0000FFF9 0000FFF6
+20347E8C 00000000
+
+-------------------------
 The rest can once again be accessed at: http://www.codemasters-project.net/guides/showentry.php?e=847

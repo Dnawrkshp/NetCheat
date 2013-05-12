@@ -23,17 +23,24 @@
 /* Engine */
 #include "Exports/NCEngine.c"
 
+#define EngineAddr 0x80047010
+//#define EngineAddr 0x80060010
+
 /* Kernel/Syscall hook address and value */
 #ifdef DEBUG
 u32 HookAddr = 0x800002FC;
-u32 HookValue = (0x00047000 / 4) + 0x0C000000;
+u32 HookValue = (((int)EngineAddr << 4) >> 6) + 0x0C000000;
 #else
 u32 HookAddr = 0x800001A0;
-u32 HookValue = (0x00047000 / 4) + 0x08000000;
+u32 HookValue = (((int)EngineAddr << 4) >> 6) + 0x08000000;
 #endif
 
-u32 EngineAddr = 0x80047000;
+//u32 EngineAddr = 0x80047010;
+#ifdef DEBUG
 u32 CodesAddr = 0x80079000;
+#else
+u32 CodesAddr = 0x80050000;
+#endif
 
 extern void usbd_irx;
 extern void usb_mass_irx;

@@ -258,7 +258,7 @@ void draw_background(int alpha) {
 }
 
 /*
- * Draw CL-LiveDebug logo
+ * Draw NetCheat logo / credits text
  */
 void draw_logo(int alpha) {
 	int x, y;
@@ -280,6 +280,9 @@ void draw_logo(int alpha) {
 							GS_SETREG_RGBAQ(0x80, 0x80, 0x80, alpha, 0x00));
 }
 
+/*
+ * Draws the texture tex
+ */
 void draw_image(GSTEXTURE tex, int x, int y, int alpha) {
 	gsKit_prim_sprite_texture(gsGlobal, &tex,
 							x, 										/* X1 */
@@ -302,13 +305,11 @@ void vram_free(void) {
 }
 
 /*
- * Load permanently mainmenu textures into VRAM
+ * Load mainmenu textures into VRAM
  */
 void load_background_Textures(void) {
 	pngData *pPng;
 	u8		*pImgData;
-
-	//init_scr();
 	
 	#ifdef DEBUG
 		printf("1st VRAM Pointer = %08x  \n", gsGlobal->CurrentPointer);
@@ -371,7 +372,7 @@ void load_background_Textures(void) {
 }
 
 /*
- * Load permanently menu textures into VRAM
+ * Load the font into VRAM
  */
 void load_Font(void) {
 	pngData *pPng;
@@ -421,7 +422,6 @@ void gfx_set_defaults(void)
 	/* Init defaults for GUI */
 	logo_alpha = 128;
 	background_alpha = 128;
-
 }
 
 /*

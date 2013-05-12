@@ -1,7 +1,7 @@
 #include "include/main.h"
 
 /*
- * Many features taken from Berion's unfinished Artemis GUI
+ * Many features taken from Berion's Unfinished Artemis GUI and The Unofficial CL-LiveDebug v4
  */
 
 /*
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 }
 
 /*
- * Loads in all the modules
+ * Loads all the IRX modules
  */
 int LoadModules(void) {
 	int ret = 1;
@@ -160,8 +160,10 @@ void load_elf(char *elf_path, int code_len) {
 	char *args[1];
 	
 	if (elf_path == NULL) { return; }
+	/*
 	if (elf_path[strlen(elf_path) - 1] == '\n')
-		elf_path[strlen(elf_path) - 1] = '\0'; //A simple fix to a bug with booting uLE
+		elf_path[strlen(elf_path) - 1] = '\0';
+	*/
 	
 	/* The loader is embedded */
 	boot_elf = (u8 *)&elf_loader;
@@ -205,10 +207,11 @@ void load_elf(char *elf_path, int code_len) {
 		/* Setup engine */
 		DI();
 		ee_kmode_enter();
-			memcpy((u32*)EngineAddr, NCEngine, sizeof(NCEngine));						/* Install the LiveDebug v3 Engine into the kernel */
+			memcpy((u32*)(int)EngineAddr, NCEngine, sizeof(NCEngine));						/* Install the NetCheat Engine into the kernel */
 			memset((u32*)CodesAddr, 0 , code_len + 8);									/* Clear code area */
 			memcpy((u32*)(CodesAddr + 8), (u32*)0x000F0000, code_len);					/* Install the codes into the kernel */
-			*(u32*)CodesAddr = (CodesAddr + 0x10); 										/* Pointer to current code */
+			*(u32*)((int)EngineAddr - 0x18) = (CodesAddr + 0x10); 							/* Pointer to initial code */
+			*(u32*)((int)EngineAddr - 0x10) = (CodesAddr + 0x10); 							/* Pointer to current code */
 			*(u32*)HookAddr = HookValue;												/* Install the kernel hook */
 		ee_kmode_exit();
 		EI();
@@ -227,6 +230,9 @@ void load_elf(char *elf_path, int code_len) {
 	ExecPS2((void *)boot_header->entry, 0, 1, args);
 }
 
+/*
+ * Loads the network IRX modules and initializes SMAP and PS2IP
+ */
 int LoadIRX()
 {
 
@@ -310,6 +316,9 @@ int LoadIRX()
 	return 0;
 }
 
+/*
+ * Taken from uLaunchELF
+ */ 
 //----------------------------------------------------------------
 int     get_CNF_string(u8 **CNF_p_p, u8 **name_p_p, u8 **value_p_p) //Taken from uLaunchElf
 {
@@ -350,7 +359,9 @@ start_line:
         return 1;                               //return control to caller
 }       //Ends get_CNF_string
 
-//----------------------------------------------------------------
+/*
+ * Taken from IGmassdumper. Parses SYSTEM.CNF
+ */
 int ParseSYSTEMCNF(char *system_cnf, char *boot_path) //Taken from IGmassdumper
 {
         int r, entrycnt, cnfsize;
@@ -389,6 +400,9 @@ int ParseSYSTEMCNF(char *system_cnf, char *boot_path) //Taken from IGmassdumper
         return 1;
 }
 
+/*
+ * Updates bottom text of the main menu to that of text
+ */
 void UpdateMMenu(char *text) {
 		strcpy((char*)midString, (char*)text);
 		while (!Draw_MainMenu())
@@ -396,6 +410,10 @@ void UpdateMMenu(char *text) {
 		Render_GUI();
 }
 
+/*
+ * Creates and binds socket and listens for a connection
+ * When connected it parses received commands
+ */
 int StartServer() {
 	
 	int n = 0;
@@ -410,8 +428,6 @@ int StartServer() {
 		UpdateMMenu("Failed to create socket");
 		SleepThread();
 	}
-
-	//int ps2ip_setconfig(ipinfo);
 
 	memset((char*)&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -428,7 +444,8 @@ int StartServer() {
 	{
 		z = 0;
 		char *buffer = (char*)malloc(1024);
-		memset((char*)buffer, 0, sizeof(buffer));
+		memset((char*)buffer, 0, sizeof(buffer)); /* Clear buffer */
+		memset((u32*)0x000F0000, 0, 0x0000FFF0); /* Clear code storage */
 		char *buf_codes = NULL;
 		char belf[40];
 		char startgm[1024];
@@ -447,21 +464,28 @@ int StartServer() {
 		
 		UpdateMMenu("Connected to PC");
 		
-		while ( z >= 0 ) /* The PC will send a packet containing "Dis" when it closes or disconnects. It will then set z < 0 on disconnect. */
+		while ( z >= 0 ) /* The PC will send a packet containing 0x2 when it closes or disconnects. It will then set z < 0 on disconnect. */
 		{
 			
 			n = _recv(newsockfd, buffer, 1, 0, 0);
 			if (n < 0) { z = -1; } else { buffer[1] = '\0'; }
+			
+			#ifdef DEBUG
 			printf("recv = %d\n", (int)(*(char*)buffer));
+			#endif
 		
 			switch ( (int)(*(char*)buffer) ) {	
 				
+				case 0: /* Socket has been abruptly disconnected... (PC manager has probably been terminated) */
+					z = -1;
+					break;
+					
 				case (int)ST_GM: /* Start game */
 					ParseSYSTEMCNF(sys_cnf, belf);
 					if( (char*)belf == NULL)
 					{
 						#ifdef DEBUG
-							printf("	Could not read system.cnf\n");
+							printf("Could not read system.cnf\n");
 						#endif
 						SleepThread();
 					}
@@ -472,7 +496,7 @@ int StartServer() {
 					close(newsockfd);
 					close(sockfd);
 					
-					AnimateFade(128, 0, -1, 10000);
+					AnimateFade(128, 0, -1, 10000); /* Animate shutting down */
 					
 					free((char*)buffer);
 					load_elf((char*)belf, code_len);
@@ -485,6 +509,7 @@ int StartServer() {
 				case (int)RCV_C: /* Receive codes */
 					ReplyWithOkay(newsockfd);
 					
+					/* Size of codes (bytes) */
 					_recv(newsockfd, buffer, 10, 0, 0);
 					code_len = atoi(buffer);
 					
@@ -493,7 +518,8 @@ int StartServer() {
 					buf_codes = (char*)malloc(code_len + 8);
 					memset((char*)buf_codes, 0, code_len + 8);
 					
-					_recv(newsockfd, buf_codes, code_len, 0, 2);
+					/* Codes */
+					_recv(newsockfd, buf_codes, code_len, 0, 3);
 					memcpy((u32*)0x000F0000, buf_codes, code_len);
 					free(buf_codes);
 					
@@ -539,6 +565,9 @@ int StartServer() {
 	
 }
 
+/*
+ * Stops the disc with the qwerty IOP mod extracted from CogSwap by Hermes
+ */
 void StopDisc(void)
 {
 	fioOpen("qwerty:r",1); // Wait for the disc to be ready
@@ -557,6 +586,9 @@ void StopDisc(void)
 	fioOpen("qwerty:s",1); // Stop the disc
 }
 
+/*
+ * Resets the IOP
+ */
 void IOP_Reset(void)
 {
   	while(!SifIopReset("rom0:UDNL rom0:EELOADCNF",0));
@@ -571,9 +603,12 @@ void IOP_Reset(void)
   	FlushCache(2);
 }
 
+/*
+ * I am guessing it resets the IOP with a new CNF?
+ */
 void ResetCNF(void)
 {
-	fioOpen("cdrom0:\\SYSTEM.CNF;1",1);
+	fioOpen("cdrom0:\\SYSTEM.CNF;1", 1);
 	SifIopReset("rom0:UDNL cdrom0:\\SYSTEM.CNF;1", 0);
 
 	while ( SifIopSync()) ;
@@ -591,6 +626,9 @@ void ResetCNF(void)
 	FlushCache(2);
 }
 
+/*
+ * deInit Timers, exit services & clear screen
+ */
 void CleanUp(void)
 {
 	TimerEnd();
@@ -606,6 +644,9 @@ void CleanUp(void)
 	Clear_Screen();
 }
 
+/*
+ * recv with more modes
+ */
 int _recv(int s, char *buf, int len, int flags, int mode) {
 	int x = 0, y = 1;
 	
@@ -623,11 +664,23 @@ int _recv(int s, char *buf, int len, int flags, int mode) {
 				x += recv(s, buf + x, 1, flags);
 			}
 			return x;
+		case 3: /* recv 1024 bytes chunks until len is reached */
+			y = 0;
+			x = 1024;
+			while (y < len) {
+				if (y >= (len - (len % 1024))) /* If true, then receive the final chunk of size (len % 1024) */
+					x = len % 1024;
+				
+				y += recv(s, buf + y, x, flags);
+			}
+			return y;
 	}
 	return 0;
 }
 
-//send (int s, const void *msg, size_t len, int flags);
+/*
+ * send with more modes
+ */
 int _send(int s, char *buf, int len, int flags, int mode) {
 	int x = 0, off = 0;
 	
@@ -649,6 +702,9 @@ int _send(int s, char *buf, int len, int flags, int mode) {
 	return 0;
 }
 
+/*
+ * Loops until "K" is received
+ */
 void WaitForOkay(int s) {
 	char temp[2];
 	do {
@@ -656,14 +712,24 @@ void WaitForOkay(int s) {
 	} while ( strcmp(temp, "K") != 0 ); //Loops until "K" is recieved
 }
 
+/*
+ * Sends "K" to PC
+ */
 int ReplyWithOkay(int s) {
 	return _send(s, "K", 2, 0, 1);
 }
 
+/*
+ * Sends an error to the PC as str
+ */
 int ReplyWithError(int s, char *str) {
 	return _send(s, (char*)str, strlen((char*)str), 0, 1);
 }
 
+/*
+ * Loads the IPCONFIG from uLE's IPCONFIG.DAT
+ * Taken from OPL's config.c
+ */
 int LoadSettings(void) {
 	
 	/* From OPL's config.c */

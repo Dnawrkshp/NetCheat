@@ -79,7 +79,7 @@ int Install_LD(void) {
 	/* Configure the engine */
 	*(u32*)0x80050018 = 0x80050130; //Pointer to linetohex region
 	*(u32*)0x8005001C = 0x80030000; //Pointer to font
-	*(u32*)0x80050020 = 0x8006FFF0; //Current address (starting address)
+	*(u32*)0x80050020 = 0x80079000; //Current address (starting address)
 	*(u32*)0x80050028 = 1; //!ExcHand;   //Exception handler install boolean (1 = off, 0 = on)
 	
 	/* Search pre-configuration */

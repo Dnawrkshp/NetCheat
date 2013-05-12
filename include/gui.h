@@ -20,7 +20,7 @@ extern u32 size_background;
 extern u32 size_logo;
 extern u32 size_font_bitsumishi;
 
-/* include font specific datas */
+/* include font specific spaces */
 #include "include/font_bitsumishi.h"
 
 struct about_content {

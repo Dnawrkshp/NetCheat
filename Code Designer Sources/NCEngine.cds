@@ -117,7 +117,7 @@ _NCExit: //NetCheat Exit and Reset
 lw t0, $FFF8(k0) //Initial pointer
 sw t0, $0000(k0)
 
-_NCExitNotDone: //NetCheat Exit (More Codes Left, 256 max limit reached)
+_NCExitNotDone: //NetCheat Exit (More Codes Left, 128 max limit reached)
 sw zero, $0004(k0)
 sw zero, $FFFC(k0)
 
@@ -226,12 +226,6 @@ daddu s0, a0, zero //addr
 daddu s1, a1, zero //value
 daddu s2, a2, zero //4 bit command
 daddu s3, a3, zero //8 bit command
-
-addiu v0, zero, $000B
-beq s2, v0, 3
-nop
-beq s0, zero, :_ERROR
-nop
 
 //8-bit write
 bne s2, zero, 3
